@@ -441,3 +441,21 @@ sys_pipe(void)
 	fd[1] = fd1;
 	return 0;
 }
+
+// BEGIN - Domaci
+int
+sys_lsdel(void)
+{
+	cprintf("%s\n", "lsdel system call");
+
+	return 0;
+}
+
+int 
+sys_rec(void)
+{
+	cprintf("%s\n", "rec system call");
+
+	return 0;
+}
+// END - Domaci

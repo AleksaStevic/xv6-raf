@@ -193,6 +193,7 @@ $T/mkfs: $T/mkfs.c $K/fs.h
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
 
+# BEGIN - Domaci
 UPROGS=\
 	$U/_cat\
 	$U/_echo\
@@ -209,6 +210,10 @@ UPROGS=\
 	$U/_usertests\
 	$U/_wc\
 	$U/_zombie\
+	$U/_lsdel\
+	$U/_rec\
+
+# END - Domaci
 
 fs.img: $T/mkfs README $(UPROGS)
 	$T/mkfs fs.img README $(UPROGS)
