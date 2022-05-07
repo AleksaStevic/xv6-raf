@@ -528,7 +528,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
 	for(off = 0; off < dp->size; off += sizeof(de)){
 		if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
 			panic("dirlookup read");
-		if(de.inum == 0)
+		if(de.del == 1)
 			continue;
 		if(namecmp(name, de.name) == 0){
 			// entry matches path element
@@ -560,12 +560,13 @@ dirlink(struct inode *dp, char *name, uint inum)
 	for(off = 0; off < dp->size; off += sizeof(de)){
 		if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
 			panic("dirlink read");
-		if(de.inum == 0)
+		if(de.del == 1)
 			break;
 	}
 
 	strncpy(de.name, name, DIRSIZ);
 	de.inum = inum;
+	de.del = 0;
 	if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
 		panic("dirlink");
 
