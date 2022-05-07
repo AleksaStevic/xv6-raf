@@ -442,7 +442,6 @@ sys_pipe(void)
 	return 0;
 }
 
-// BEGIN - Domaci
 int
 sys_lsdel(void)
 {
@@ -458,4 +457,3 @@ sys_rec(void)
 
 	return 0;
 }
-// END - Domaci
