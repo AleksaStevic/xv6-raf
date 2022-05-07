@@ -337,7 +337,7 @@ iput(struct inode *ip)
 		release(&icache.lock);
 		if(r == 1){
 			// inode has no links and no other references: truncate and free.
-			itrunc(ip);
+			//itrunc(ip);
 			ip->type = 0;
 			iupdate(ip);
 			ip->valid = 0;
