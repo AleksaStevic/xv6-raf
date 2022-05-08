@@ -4,8 +4,6 @@
 #include "kernel/fcntl.h"
 #include "kernel/fs.h"
 
-#define MAX_ROWS 64
-
 char alphabet[] = "abcdefghijklmnopqrstuvwxyz";
 
 void createbuf(char *buf, char chr, int n) {
