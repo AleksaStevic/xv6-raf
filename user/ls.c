@@ -55,7 +55,7 @@ ls(char *path)
 		p = buf+strlen(buf);
 		*p++ = '/';
 		while(read(fd, &de, sizeof(de)) == sizeof(de)){
-			if(de.del == 1)
+			if(de.del == 1) // @TODO maybe wrong
 				continue;
 			memmove(p, de.name, DIRSIZ);
 			p[DIRSIZ] = 0;
