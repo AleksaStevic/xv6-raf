@@ -5,13 +5,12 @@
 #include "kernel/fs.h"
 
 #define MAX_ROWS 64
-#define BBSIZE 10
 
 char alphabet[] = "abcdefghijklmnopqrstuvwxyz";
 
-void createbuf(char *nzm, char chr, int n) {
+void createbuf(char *buf, char chr, int n) {
     for (int i = 0; i < n; ++i) {
-        nzm[i] = chr;
+        buf[i] = chr;
     }
 }
 
@@ -21,8 +20,8 @@ main(int argc, char *argv[])
     if (argc < 3) {
         printf("usage: writer <filename> <size>.\n");
         exit();
-        return 0;
     }
+
     int fd;
     int size = atoi(argv[2]);
     if((fd = open(argv[1], O_CREATE | O_WRONLY)) < 0) {
@@ -32,13 +31,13 @@ main(int argc, char *argv[])
 
     // @TODO abort if file exists
 
-    char buf[BBSIZE];
+    char buf[BSIZE];
     int ichr = 0;
     while(size > 0) {
         if (ichr > 26) break;
+        createbuf(buf, alphabet[ichr], BSIZE);
         int n;
-        createbuf(buf, alphabet[ichr], BBSIZE);
-        if ((n = write(fd, buf, BBSIZE < size ? BBSIZE : size)) < 0) {
+        if ((n = write(fd, buf, BSIZE < size ? BSIZE : size)) < 0) {
             printf("writer: cannot write %s\n", argv[1]);
             exit();
         }
