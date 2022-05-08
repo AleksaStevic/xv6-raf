@@ -448,9 +448,46 @@ sys_pipe(void)
 int
 sys_lsdel(void)
 {
-	cprintf("%s\n", "lsdel system call");
+	char *path;
+	char *result;
+	struct inode *dp;
+	struct dirent de;
+	uint off;
 
-	return 0;
+	if (argstr(0, &path) < 0 || argptr(1, &result, DIRFNUM * (DIRSIZ + 1)) < 0) {
+		panic("invalid system call arguments"); // @TODO ili vrati -1?
+	}
+
+	begin_op();
+	if((dp = namei(path)) == 0) {
+		end_op();
+		return -1;
+	}
+
+	ilock(dp);
+	if(dp->type != T_DIR){
+		iunlockput(dp);
+		end_op();
+		return -1;
+	}
+
+	int i = 0;
+	for(off = 0; off < dp->size; off += sizeof(de)){
+		if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+			panic("dirlookup read");
+		if(de.del == 1) {
+			if (i >= DIRFNUM)
+				panic("maximum dir limit exceeded");
+			strncpy(result + i * (DIRSIZ+1), de.name, DIRSIZ+1); // @TODO: maybe +1 maybe not
+			i++;
+		}
+	}
+	iunlock(dp);
+	end_op();
+
+	//cprintf("%s\n", "lsdel system call");
+
+	return i;
 }
 
 int 
