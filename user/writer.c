@@ -16,7 +16,7 @@ int
 main(int argc, char *argv[])
 {
     if (argc < 3) {
-        printf("usage: writer <filename> <size>.\n");
+        printf("usage: writer <path> <size>.\n");
         exit();
     }
 

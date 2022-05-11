@@ -16,6 +16,8 @@
 #include "file.h"
 #include "fcntl.h"
 
+extern struct superblock sb;
+
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
 static int
@@ -474,7 +476,7 @@ sys_lsdel(void)
 	int i = 0;
 	for(off = 0; off < dp->size; off += sizeof(de)){
 		if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
-			panic("dirlookup read");
+			panic("sys_lsdel read");
 		if(de.del == 1) {
 			if (i >= DIRFNUM)
 				panic("maximum dir limit exceeded");
@@ -485,14 +487,57 @@ sys_lsdel(void)
 	iunlock(dp);
 	end_op();
 
-	//cprintf("%s\n", "lsdel system call");
-
 	return i;
 }
 
 int 
 sys_rec(void)
 {
+	struct inode *ip, *dp;
+	//struct dirent de;
+	char name[DIRSIZ], *path;
+	uint off;
+
+	if (argstr(0, &path) < 0)
+		panic("wrong system call arguments");
+
+	begin_op();
+	if((dp = nameiparent(path, name)) == 0){
+		end_op();
+		return -1;
+	}
+
+	ilock(dp);
+	if((ip = dirlookupdel(dp, name, &off)) == 0) {
+		iunlockput(dp);
+		end_op();
+		return -2;
+	}
+	ilock(ip);
+
+	if (ip->type != 0) {
+		iunlockput(dp);
+		iunlockput(ip);
+		end_op();
+		return -3;
+	}
+	
+	char bused = 0;
+	for(int i = 0; i < NDIRECT; i++){
+		struct buf *bp;
+		uint b = ip->addrs[i];
+		int bi, m;
+		if(b) {
+			bp = bread(ip->dev, BBLOCK(b, sb));
+			bi = b % BPB;
+			m = 1 << (bi % 8);
+			if((bp->data[bi/8] & m) == 0) {}
+		}
+	}
+
+	// if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+	// 	panic("sys_rec read");
+
 	cprintf("%s\n", "rec system call");
 
 	return 0;

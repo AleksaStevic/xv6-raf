@@ -542,6 +542,33 @@ dirlookup(struct inode *dp, char *name, uint *poff)
 	return 0;
 }
 
+
+// Look for a DELETED directory entry in a directory.
+// If found, set *poff to byte offset of entry.
+struct inode*
+dirlookupdel(struct inode *dp, char *name, uint *poff)
+{
+	uint off, inum;
+	struct dirent de;
+
+	if(dp->type != T_DIR)
+		panic("dirlookupdel not DIR");
+
+	for(off = 0; off < dp->size; off += sizeof(de)){
+		if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+			panic("dirlookupdel read");
+		if(de.del == 1 && namecmp(name, de.name) == 0){
+			// entry matches path element
+			if(poff)
+				*poff = off;
+			inum = de.inum;
+			return iget(dp->dev, inum);
+		}
+	}
+
+	return 0;
+}
+
 // Write a new directory entry (name, inum) into the directory dp.
 int
 dirlink(struct inode *dp, char *name, uint inum)
