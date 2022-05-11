@@ -12,7 +12,6 @@ main(int argc, char *argv[])
         return 0;
     }
 
-    printf("%s\n", "rec user software");
     switch(rec(argv[1])) {
         case 0:  printf("Uspesan oporavak.\n"); break;
         case -1: printf("Roditeljski direktorijum za navedenu datoteku nije validan.\n"); break;

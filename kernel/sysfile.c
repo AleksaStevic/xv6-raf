@@ -15,6 +15,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "buf.h"
 
 extern struct superblock sb;
 
@@ -523,17 +524,49 @@ sys_rec(void)
 	}
 	
 	char bused = 0;
+	struct buf *bp;
+	int bi, m;
 	for(int i = 0; i < NDIRECT; i++){
-		struct buf *bp;
 		uint b = ip->addrs[i];
-		int bi, m;
 		if(b) {
 			bp = bread(ip->dev, BBLOCK(b, sb));
 			bi = b % BPB;
 			m = 1 << (bi % 8);
-			if((bp->data[bi/8] & m) == 0) {}
+			if((bp->data[bi/8] & m) != 0) {
+				bused = 1;
+				brelse(bp);
+				break;
+			}
+			brelse(bp);
 		}
 	}
+
+	if(ip->addrs[NDIRECT]){
+		bp = bread(ip->dev, ip->addrs[NDIRECT]);
+		uint *a = (uint*)bp->data;
+		for(int j = 0; j < NINDIRECT; j++){
+			if(a[j]) {
+				struct buf *bpp = bread(ip->dev, BBLOCK(a[j], sb));
+				bi = a[j] % BPB;
+				m = 1 << (bi % 8);
+				if((bpp->data[bi/8] & m) != 0) {
+					bused = 1;
+					brelse(bpp);
+					break;
+				}
+				brelse(bpp);
+			}
+		}
+		brelse(bp);
+	}
+
+	if (bused != 0) {
+		iunlockput(dp);
+		iunlockput(ip);
+		end_op();
+		return -4;
+	}
+
 
 	// if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
 	// 	panic("sys_rec read");
