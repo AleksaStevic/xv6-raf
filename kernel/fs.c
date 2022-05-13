@@ -305,8 +305,8 @@ ilock(struct inode *ip)
 		memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
 		brelse(bp);
 		ip->valid = 1;
-		if(ip->type == 0)
-			panic("ilock: no type");
+		// if(ip->type == 0)
+		// 	panic("ilock: no type");
 	}
 }
 
