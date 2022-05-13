@@ -94,6 +94,36 @@ bfree(int dev, uint b)
 	brelse(bp);
 }
 
+// Ova funkcija proverava da li je blok na adresi b slobodan
+// Argumenti:
+// - int dev
+// - uint b - adresa
+static int bused(int dev, uint b) {
+	struct buf *bp;
+	int bi, m;
+
+	bp = bread(dev, BBLOCK(b, sb));
+	bi = b % BPB;
+	m = 1 << (bi % 8);
+	int used = (bp->data[bi/8] & m) != 0;
+	brelse(bp);
+	return used;
+}
+
+// Ova funkcija oznacava block sa adresom b da vise nije slobodan.
+static void bmarkused(int dev, uint b) {
+	struct buf *bp;
+	int bi, m;
+	bp = bread(dev, BBLOCK(b, sb));
+	bi = b % BPB;
+	m = 1 << (bi % 8);
+	if((bp->data[bi/8] & m) == 0) {  // Is block free?
+		bp->data[bi/8] |= m;  // Mark block in use.
+		log_write(bp);
+	}
+	brelse(bp);
+}
+
 // Inodes.
 //
 // An inode describes a single unnamed file.
@@ -356,6 +386,58 @@ iunlockput(struct inode *ip)
 {
 	iunlock(ip);
 	iput(ip);
+}
+
+int ianybused(struct inode *ip) {
+	struct buf *bp;
+	int i, j;
+	uint *a;
+	
+	for(i = 0; i < NDIRECT; i++){
+		if (ip->addrs[i] && bused(ip->dev, ip->addrs[i])) {
+			// znaci da je bar jedan block zauzet i prekidamo dalje izvrsavanje
+			return 1;
+		}
+	}
+
+	if(ip->addrs[NDIRECT]){
+		bp = bread(ip->dev, ip->addrs[NDIRECT]);
+		a = (uint*)bp->data;
+		for(j = 0; j < NINDIRECT; j++){
+			if(a[j] && bused(ip->dev, a[j])) {
+				brelse(bp);
+				// znaci da je bar jedan indirektan  block zauzet i iprekidamo dalje
+				return 1;
+			}
+		}
+		brelse(bp);
+	}
+
+	return 0;
+}
+
+// Ova funkcija oznacava sve blokove inoda da vise nisu slobodni.
+void imarkused(struct inode *ip) {
+	struct buf *bp;
+	int i, j;
+	uint *a;
+	
+	for(i = 0; i < NDIRECT; i++){
+		if (ip->addrs[i]) {
+			bmarkused(ip->dev, ip->addrs[i]);
+		}
+	}
+
+	if(ip->addrs[NDIRECT]){
+		bp = bread(ip->dev, ip->addrs[NDIRECT]);
+		a = (uint*)bp->data;
+		for(j = 0; j < NINDIRECT; j++){
+			if(a[j]) {
+				bmarkused(ip->dev, ip->addrs[i]);
+			}
+		}
+		brelse(bp);
+	}
 }
 
 // Inode content

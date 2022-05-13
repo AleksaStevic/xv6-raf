@@ -522,51 +522,17 @@ sys_rec(void)
 		end_op();
 		return -3;
 	}
-	
-	char bused = 0;
-	struct buf *bp;
-	int bi, m;
-	for(int i = 0; i < NDIRECT; i++){
-		uint b = ip->addrs[i];
-		if(b) {
-			bp = bread(ip->dev, BBLOCK(b, sb));
-			bi = b % BPB;
-			m = 1 << (bi % 8);
-			if((bp->data[bi/8] & m) != 0) {
-				bused = 1;
-				brelse(bp);
-				break;
-			}
-			brelse(bp);
-		}
-	}
 
-	if(ip->addrs[NDIRECT]){
-		bp = bread(ip->dev, ip->addrs[NDIRECT]);
-		uint *a = (uint*)bp->data;
-		for(int j = 0; j < NINDIRECT; j++){
-			if(a[j]) {
-				struct buf *bpp = bread(ip->dev, BBLOCK(a[j], sb));
-				bi = a[j] % BPB;
-				m = 1 << (bi % 8);
-				if((bpp->data[bi/8] & m) != 0) {
-					bused = 1;
-					brelse(bpp);
-					break;
-				}
-				brelse(bpp);
-			}
-		}
-		brelse(bp);
-	}
-
-	if (bused != 0) {
+	if (ianybused(ip)) {
 		iunlockput(dp);
-		//iunlockput(ip);
 		end_op();
 		return -4;
 	}
 
+	ip->type = T_FILE;
+	imarkused(ip);
+	iupdate(ip);
+	// iunlockput(ip);
 
 	if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
 		panic("sys_rec readi");
@@ -576,48 +542,7 @@ sys_rec(void)
 	if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de)) {
 		panic("sys_rec writei");
 	}
-	ip->type == T_FILE;
-
-	for(int i = 0; i < NDIRECT; i++){
-		uint b = ip->addrs[i];
-		if(b) {
-			bp = bread(ip->dev, BBLOCK(b, sb));
-			bi = b % BPB;
-			m = 1 << (bi % 8);
-			if((bp->data[bi/8] & m) == 0){  // Is block free?
-				bp->data[bi/8] |= m;  // Mark block in use.
-				log_write(bp);
-				brelse(bp);
-				//bzero(ip->dev, b + bi);
-			}
-			brelse(bp);
-		}
-	}
-
-	if(ip->addrs[NDIRECT]){
-		bp = bread(ip->dev, ip->addrs[NDIRECT]);
-		uint *a = (uint*)bp->data;
-		for(int j = 0; j < NINDIRECT; j++){
-			if(a[j]) {
-				struct buf *bpp = bread(ip->dev, BBLOCK(a[j], sb));
-				bi = a[j] % BPB;
-				m = 1 << (bi % 8);
-				if((bpp->data[bi/8] & m) == 0){  // Is block free?
-					bpp->data[bi/8] |= m;  // Mark block in use.
-					log_write(bpp);
-					brelse(bpp);
-					//bzero(ip->dev, a[j] + bi);
-				}
-				brelse(bpp);
-			}
-		}
-		brelse(bp);
-	}
-
-	iupdate(ip);
-
 	iunlockput(dp);
-	iunlockput(ip);
 	end_op();
 
 	return 0;
