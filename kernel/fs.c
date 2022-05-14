@@ -388,12 +388,15 @@ iunlockput(struct inode *ip)
 	iput(ip);
 }
 
+// Ova funkcija treba da proveri da li postoji bilo koji blok u
+// ovom inode-u da se trenutno koristi (tj da nije slobodan).
+// Ukoliko postoji barem 1, vraca 1, u suprotnom vraca 0.
 int ianybused(struct inode *ip) {
 	struct buf *bp;
 	int i, j;
 	uint *a;
 	
-	for(i = 0; i < NDIRECT; i++){
+	for(i = 0; i < NDIRECT; i++) {
 		if (ip->addrs[i] && bused(ip->dev, ip->addrs[i])) {
 			// znaci da je bar jedan block zauzet i prekidamo dalje izvrsavanje
 			return 1;
@@ -433,7 +436,7 @@ void imarkused(struct inode *ip) {
 		a = (uint*)bp->data;
 		for(j = 0; j < NINDIRECT; j++){
 			if(a[j]) {
-				bmarkused(ip->dev, ip->addrs[i]);
+				bmarkused(ip->dev, a[j]);
 			}
 		}
 		brelse(bp);

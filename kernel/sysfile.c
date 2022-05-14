@@ -532,7 +532,7 @@ sys_rec(void)
 	ip->type = T_FILE;
 	imarkused(ip);
 	iupdate(ip);
-	// iunlockput(ip);
+	iunlock(ip);
 
 	if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
 		panic("sys_rec readi");
