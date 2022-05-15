@@ -27,8 +27,6 @@ main(int argc, char *argv[])
         exit();
     }
 
-    // @TODO abort if file exists
-
     char buf[BSIZE];
     int ichr = 0;
     while(size > 0) {

@@ -458,7 +458,7 @@ sys_lsdel(void)
 	uint off;
 
 	if (argstr(0, &path) < 0 || argptr(1, &result, DIRFNUM * (DIRSIZ + 1)) < 0) {
-		panic("invalid system call arguments"); // @TODO ili vrati -1?
+		panic("invalid system call arguments");
 	}
 
 	begin_op();
@@ -481,7 +481,7 @@ sys_lsdel(void)
 		if(de.del == 1) {
 			if (i >= DIRFNUM)
 				panic("maximum dir limit exceeded");
-			strncpy(result + i * (DIRSIZ+1), de.name, DIRSIZ+1); // @TODO: maybe +1 maybe not
+			strncpy(result + i * (DIRSIZ+1), de.name, DIRSIZ+1);
 			i++;
 		}
 	}
